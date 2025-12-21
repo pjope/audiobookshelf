@@ -382,6 +382,24 @@ class MeController {
   }
 
   /**
+   * PATCH: api/me/settings
+   * Update user settings
+   *
+   * @param {RequestWithUser} req
+   * @param {Response} res
+   */
+  async updateSettings(req, res) {
+    const { autoTrackSeriesOnListen } = req.body
+
+    if (typeof autoTrackSeriesOnListen === 'boolean') {
+      await req.user.setAutoTrackSeriesOnListen(autoTrackSeriesOnListen)
+      SocketAuthority.clientEmitter(req.user.id, 'user_updated', req.user.toOldJSONForBrowser())
+    }
+
+    res.json(req.user.toOldJSONForBrowser())
+  }
+
+  /**
    * GET: api/me/progress/:id/remove-from-continue-listening
    *
    * @param {RequestWithUser} req

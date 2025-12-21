@@ -43,7 +43,11 @@ import bookshelfCardsHelpers from '@/mixins/bookshelfCardsHelpers'
 export default {
   props: {
     page: String,
-    seriesId: String
+    seriesId: String,
+    externalBooks: {
+      type: Array,
+      default: () => []
+    }
   },
   mixins: [bookshelfCardsHelpers],
   data() {
@@ -131,6 +135,27 @@ export default {
     },
     seriesSortDesc() {
       return this.$store.getters['user/getUserSetting']('seriesSortDesc')
+    },
+    transformedExternalBooks() {
+      if (!this.externalBooks || !this.externalBooks.length) return []
+      return this.externalBooks.map((book) => ({
+        id: `external-${book.id}`,
+        isExternal: true,
+        asin: book.asin,
+        region: book.region || 'us',
+        media: {
+          metadata: {
+            title: book.title,
+            authorName: book.author,
+            narratorName: book.narrator,
+            series: book.trackedSeries?.series ? [{ name: book.trackedSeries.series.name, sequence: book.sequence }] : []
+          },
+          coverPath: book.coverUrl
+        },
+        mediaType: 'book',
+        coverPath: book.coverUrl,
+        sequence: book.sequence
+      }))
     },
     seriesFilterBy() {
       return this.$store.getters['user/getUserSetting']('seriesFilterBy')
@@ -354,9 +379,15 @@ export default {
       if (payload) {
         if (!this.initialized) {
           this.initialized = true
-          this.totalEntities = payload.total
+          const externalCount = this.transformedExternalBooks.length
+          this.totalEntities = payload.total + externalCount
           this.totalShelves = Math.ceil(this.totalEntities / this.entitiesPerShelf)
           this.entities = new Array(this.totalEntities)
+
+          // Add external books at the end
+          for (let i = 0; i < externalCount; i++) {
+            this.entities[payload.total + i] = this.transformedExternalBooks[i]
+          }
         }
 
         for (let i = 0; i < payload.results.length; i++) {

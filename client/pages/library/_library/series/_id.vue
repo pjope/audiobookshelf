@@ -1,7 +1,7 @@
 <template>
   <div class="page" :class="streamLibraryItem ? 'streaming' : ''">
     <app-book-shelf-toolbar :selected-series="series" />
-    <app-lazy-bookshelf page="series-books" :series-id="seriesId" />
+    <app-lazy-bookshelf page="series-books" :series-id="seriesId" :external-books="externalBooks" />
   </div>
 </template>
 
@@ -19,7 +19,7 @@ export default {
       return redirect(`/library/${libraryId}`)
     }
 
-    const series = await app.$axios.$get(`/api/libraries/${library.id}/series/${params.id}?include=progress,rssfeed`).catch((error) => {
+    const series = await app.$axios.$get(`/api/libraries/${library.id}/series/${params.id}?include=progress,rssfeed,externalBooks`).catch((error) => {
       console.error('Failed', error)
       return false
     })
@@ -29,7 +29,8 @@ export default {
 
     return {
       series,
-      seriesId: params.id
+      seriesId: params.id,
+      externalBooks: series.externalBooks || []
     }
   },
   data() {

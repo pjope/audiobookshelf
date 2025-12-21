@@ -138,6 +138,43 @@ class NotificationManager {
     this.triggerNotification('onBackupFailed', eventData)
   }
 
+  /**
+   * Handles new series release notification
+   *
+   * @param {object} releaseData - New release information
+   * @param {string} releaseData.seriesName - Name of the series
+   * @param {string} releaseData.seriesId - ID of the series
+   * @param {string} releaseData.bookTitle - Title of the new book
+   * @param {string} releaseData.bookAuthor - Author of the book
+   * @param {string} releaseData.bookNarrator - Narrator of the book
+   * @param {string} releaseData.sequence - Book sequence in series
+   * @param {string} releaseData.releaseDate - Release date
+   * @param {string} releaseData.coverUrl - Cover image URL
+   * @param {string} releaseData.asin - Audible ASIN
+   */
+  async onNewSeriesRelease(releaseData) {
+    if (!Database.notificationSettings.isUseable) return
+
+    if (!Database.notificationSettings.getHasActiveNotificationsForEvent('onNewSeriesRelease')) {
+      Logger.debug(`[NotificationManager] onNewSeriesRelease: No active notifications`)
+      return
+    }
+
+    Logger.debug(`[NotificationManager] onNewSeriesRelease: New release "${releaseData.bookTitle}" for series "${releaseData.seriesName}"`)
+    const eventData = {
+      seriesName: releaseData.seriesName || 'Unknown Series',
+      seriesId: releaseData.seriesId || '',
+      bookTitle: releaseData.bookTitle || 'Unknown Title',
+      bookAuthor: releaseData.bookAuthor || '',
+      bookNarrator: releaseData.bookNarrator || '',
+      sequence: releaseData.sequence || '',
+      releaseDate: releaseData.releaseDate || '',
+      coverUrl: releaseData.coverUrl || '',
+      asin: releaseData.asin || ''
+    }
+    this.triggerNotification('onNewSeriesRelease', eventData)
+  }
+
   onTest() {
     this.triggerNotification('onTest')
   }

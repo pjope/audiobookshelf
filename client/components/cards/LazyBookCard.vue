@@ -19,7 +19,7 @@
         </div>
 
         <!-- Cover Image -->
-        <img cy-id="coverImage" v-if="libraryItem" :alt="`${displayTitle}, ${$strings.LabelCover}`" ref="cover" aria-hidden="true" :src="bookCoverSrc" class="relative w-full h-full transition-opacity duration-300" :class="showCoverBg ? 'object-contain' : 'object-fill'" @load="imageLoaded" :style="{ opacity: imageReady ? 1 : 0 }" />
+        <img cy-id="coverImage" v-if="libraryItem" :alt="`${displayTitle}, ${$strings.LabelCover}`" ref="cover" aria-hidden="true" :src="bookCoverSrc" class="relative w-full h-full transition-all duration-300" :class="coverImageClasses" @load="imageLoaded" :style="coverImageStyles" />
 
         <!-- Placeholder Cover Title & Author -->
         <div cy-id="placeholderTitle" v-if="!hasCover" class="absolute top-0 left-0 right-0 bottom-0 w-full h-full flex items-center justify-center" :style="{ padding: placeholderCoverPadding + 'em' }">
@@ -75,6 +75,12 @@
         <!-- Series name overlay -->
         <div cy-id="seriesNameOverlay" v-if="booksInSeries && libraryItem && isHovering" class="w-full h-full absolute top-0 left-0 z-10 bg-black/60 rounded-sm flex items-center justify-center" :style="{ padding: 1 + 'em' }">
           <p v-if="seriesName" class="text-gray-200 text-center" :style="{ fontSize: 1.1 + 'em' }">{{ seriesName }}</p>
+        </div>
+
+        <!-- External book (Not in Library) overlay -->
+        <div cy-id="externalBookOverlay" v-if="isExternal && isHovering" class="w-full h-full absolute top-0 left-0 z-10 bg-black/60 rounded-sm flex flex-col items-center justify-center" :style="{ padding: 0.5 + 'em' }">
+          <span class="material-symbols text-gray-200" :style="{ fontSize: 2 + 'em' }">open_in_new</span>
+          <p class="text-gray-200 text-center mt-1" :style="{ fontSize: 0.9 + 'em' }">{{ $strings.LabelNotInLibrary || 'Not in Library' }}</p>
         </div>
 
         <!-- Error widget -->
@@ -230,6 +236,9 @@ export default {
       return this.store.getters['globals/getPlaceholderCoverSrc']
     },
     bookCoverSrc() {
+      if (this.isExternal && this._libraryItem.coverPath) {
+        return this._libraryItem.coverPath
+      }
       return this.store.getters['globals/getLibraryItemCoverSrc'](this._libraryItem, this.placeholderUrl)
     },
     libraryItemId() {
@@ -446,6 +455,22 @@ export default {
     },
     isInvalid() {
       return this._libraryItem.isInvalid
+    },
+    isExternal() {
+      return this._libraryItem.isExternal || false
+    },
+    coverImageClasses() {
+      const classes = []
+      classes.push(this.showCoverBg ? 'object-contain' : 'object-fill')
+      if (this.isExternal) {
+        classes.push(this.isHovering ? 'grayscale-[50%]' : 'grayscale')
+      }
+      return classes
+    },
+    coverImageStyles() {
+      return {
+        opacity: this.imageReady ? 1 : 0
+      }
     },
     errorText() {
       if (this.isMissing) return 'Item directory is missing!'
@@ -707,6 +732,13 @@ export default {
         e.stopPropagation()
         e.preventDefault()
         this.selectBtnClick(e)
+      } else if (this.isExternal) {
+        const asin = this._libraryItem.asin
+        const region = this._libraryItem.region || 'us'
+        if (asin) {
+          const audibleUrl = `https://www.audible.${region === 'us' ? 'com' : region}/pd/${asin}`
+          window.open(audibleUrl, '_blank')
+        }
       } else {
         var router = this.$router || this.$nuxt.$router
         if (router) {

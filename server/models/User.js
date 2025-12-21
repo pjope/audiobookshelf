@@ -204,7 +204,8 @@ class User extends Model {
       permissions: this.getDefaultPermissionsForUserType('root'),
       bookmarks: [],
       extraData: {
-        seriesHideFromContinueListening: []
+        seriesHideFromContinueListening: [],
+        autoTrackSeriesOnListen: true
       }
     }
     return this.create(newUser)
@@ -328,7 +329,8 @@ class User extends Model {
       bookmarks: [],
       extraData: {
         authOpenIDSub: userinfo.sub,
-        seriesHideFromContinueListening: []
+        seriesHideFromContinueListening: [],
+        autoTrackSeriesOnListen: true
       }
     }
     const user = await this.create(newUser)
@@ -603,6 +605,7 @@ class User extends Model {
    */
   toOldJSONForBrowser(hideRootToken = false, minimal = false) {
     const seriesHideFromContinueListening = this.extraData?.seriesHideFromContinueListening || []
+    const autoTrackSeriesOnListen = this.extraData?.autoTrackSeriesOnListen !== false
     const librariesAccessible = this.permissions?.librariesAccessible || []
     const itemTagsSelected = this.permissions?.itemTagsSelected || []
     const permissions = { ...this.permissions }
@@ -621,6 +624,7 @@ class User extends Model {
       isOldToken: this.isOldToken,
       mediaProgress: this.mediaProgresses?.map((mp) => mp.getOldMediaProgress()) || [],
       seriesHideFromContinueListening: [...seriesHideFromContinueListening],
+      autoTrackSeriesOnListen,
       bookmarks: this.bookmarks?.map((b) => ({ ...b })) || [],
       isActive: this.isActive,
       isLocked: this.isLocked,
@@ -933,6 +937,20 @@ class User extends Model {
     if (!seriesHideFromContinueListening.includes(seriesId)) return false
     seriesHideFromContinueListening = seriesHideFromContinueListening.filter((sid) => sid !== seriesId)
     this.extraData.seriesHideFromContinueListening = seriesHideFromContinueListening
+    this.changed('extraData', true)
+    await this.save()
+    return true
+  }
+
+  /**
+   * Update auto-track series on listen setting
+   *
+   * @param {boolean} enabled
+   * @returns {Promise<boolean>}
+   */
+  async setAutoTrackSeriesOnListen(enabled) {
+    if (!this.extraData) this.extraData = {}
+    this.extraData.autoTrackSeriesOnListen = enabled
     this.changed('extraData', true)
     await this.save()
     return true

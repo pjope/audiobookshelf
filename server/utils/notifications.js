@@ -93,6 +93,29 @@ module.exports.notificationData = {
       }
     },
     {
+      name: 'onNewSeriesRelease',
+      requiresLibrary: true,
+      libraryMediaType: 'book',
+      description: 'Triggered when a new book is available for a tracked series',
+      descriptionKey: 'NotificationOnNewSeriesReleaseDescription',
+      variables: ['seriesName', 'seriesId', 'bookTitle', 'bookAuthor', 'bookNarrator', 'sequence', 'releaseDate', 'coverUrl', 'asin'],
+      defaults: {
+        title: 'New {{seriesName}} Release!',
+        body: '{{bookTitle}} (Book {{sequence}}) by {{bookAuthor}} is now available!'
+      },
+      testData: {
+        seriesName: 'Test Series',
+        seriesId: 'se_test',
+        bookTitle: 'New Book in Series',
+        bookAuthor: 'Test Author',
+        bookNarrator: 'Test Narrator',
+        sequence: '5',
+        releaseDate: '2024-01-15',
+        coverUrl: 'https://example.com/cover.jpg',
+        asin: 'B0TESTBOOK'
+      }
+    },
+    {
       name: 'onTest',
       requiresLibrary: false,
       description: 'Event for testing the notification system',

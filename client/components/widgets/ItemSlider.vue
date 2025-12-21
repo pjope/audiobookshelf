@@ -14,7 +14,7 @@
       <div class="flex space-x-4e">
         <template v-for="(item, index) in items">
           <div cy-id="item" ref="item" :key="itemKeyFunc(item)">
-            <component :is="componentName" :ref="itemRefFunc(item)" :index="index" :[itemPropName]="item" :bookshelf-view="bookshelfView" :continue-listening-shelf="continueListeningShelf" class="relative" @edit="editFunc" @editPodcast="editItem" @select="selectItem" @hook:updated="setScrollVars" />
+            <component :is="componentName" :ref="itemRefFunc(item)" :index="index" :[itemPropName]="item" :bookshelf-view="bookshelfView" :continue-listening-shelf="continueListeningShelf" class="relative" @edit="editFunc" @editPodcast="editItem" @select="selectItem" @dismiss="dismissRelease" @hook:updated="setScrollVars" />
           </div>
         </template>
       </div>
@@ -82,6 +82,11 @@ export default {
           component: 'cards-lazy-book-card',
           itemPropName: 'book-mount',
           itemIdFunc: (item) => item.id
+        },
+        newRelease: {
+          component: 'cards-new-release-card',
+          itemPropName: 'release-mount',
+          itemIdFunc: (item) => item.id
         }
       }
     }
@@ -139,6 +144,9 @@ export default {
     },
     selectItem(payload) {
       this.$emit('selectEntity', payload)
+    },
+    dismissRelease(release) {
+      this.$emit('dismissRelease', release)
     },
     itemSelectedEvt() {
       this.updateSelectionMode(this.isSelectionMode)

@@ -801,6 +801,16 @@ class LibraryController {
       seriesJson.rssFeed = feedObj?.toOldJSONMinified() || null
     }
 
+    if (include.includes('externalbooks')) {
+      const trackedSeries = await Database.trackedSeriesModel.getByUserAndSeries(req.user.id, series.id)
+      if (trackedSeries) {
+        const externalReleases = await Database.newReleaseModel.getForTrackedSeries(trackedSeries.id)
+        seriesJson.externalBooks = externalReleases.map((r) => r.toJSON())
+      } else {
+        seriesJson.externalBooks = []
+      }
+    }
+
     res.json(seriesJson)
   }
 

@@ -17,6 +17,13 @@
           <ui-dropdown v-model="selectedLanguage" :items="$languageCodeOptions" small class="max-w-48" @input="updateLocalLanguage" />
         </div>
 
+        <div class="py-4">
+          <div class="flex items-center">
+            <ui-toggle-switch v-model="autoTrackSeries" :disabled="updatingSettings" @input="updateAutoTrackSeries" />
+            <p class="pl-4 text-sm font-semibold">{{ $strings.LabelAutoTrackSeries || 'Automatically follow series when listening' }}</p>
+          </div>
+        </div>
+
         <div class="w-full h-px bg-white/10 my-4" />
 
         <p v-if="showChangePasswordForm" class="mb-4 text-lg">{{ $strings.HeaderChangePassword }}</p>
@@ -88,6 +95,8 @@ export default {
       confirmPassword: null,
       changingPassword: false,
       selectedLanguage: '',
+      autoTrackSeries: true,
+      updatingSettings: false,
       newEReaderDevice: {
         name: '',
         email: ''
@@ -134,6 +143,21 @@ export default {
   methods: {
     updateLocalLanguage(lang) {
       this.$setLanguageCode(lang)
+    },
+    async updateAutoTrackSeries(value) {
+      this.updatingSettings = true
+      try {
+        await this.$axios.$patch('/api/me/settings', {
+          autoTrackSeriesOnListen: value
+        })
+        this.$toast.success(this.$strings.ToastSettingsUpdated || 'Settings updated')
+      } catch (error) {
+        console.error('Failed to update settings', error)
+        this.$toast.error(this.$strings.ToastFailedToUpdate || 'Failed to update settings')
+        this.autoTrackSeries = !value
+      } finally {
+        this.updatingSettings = false
+      }
     },
     logout() {
       // Disconnect from socket
@@ -243,6 +267,7 @@ export default {
   mounted() {
     this.selectedLanguage = this.$languageCodes.current
     this.ereaderDevices = this.$store.state.libraries.ereaderDevices || []
+    this.autoTrackSeries = this.user?.autoTrackSeriesOnListen !== false
   }
 }
 </script>

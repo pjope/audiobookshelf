@@ -1,6 +1,6 @@
 const { DataTypes, Model } = require('sequelize')
 const Logger = require('../Logger')
-const { isNullOrNaN } = require('../utils')
+const { isNullOrNaN, isValidASIN } = require('../utils')
 
 class MediaProgress extends Model {
   constructor(values, options) {
@@ -134,6 +134,64 @@ class MediaProgress extends Model {
     // update the potentially cached user after destroying the media progress
     MediaProgress.addHook('afterDestroy', (instance) => {
       user.mediaProgressRemoved(instance)
+    })
+
+    // Auto-track series when user starts listening to a book in a series
+    MediaProgress.addHook('afterCreate', async (instance) => {
+      if (instance.mediaItemType !== 'book') return
+
+      try {
+        const Database = require('../Database')
+
+        const progressUser = await Database.userModel.findByPk(instance.userId)
+        if (!progressUser || progressUser.extraData?.autoTrackSeriesOnListen === false) {
+          return
+        }
+
+        const bookWithSeries = await Database.bookModel.findByPk(instance.mediaItemId, {
+          include: [
+            {
+              model: Database.seriesModel,
+              through: { attributes: ['sequence'] }
+            }
+          ]
+        })
+
+        if (!bookWithSeries?.series?.length) return
+
+        for (const series of bookWithSeries.series) {
+          const isAlreadyTracking = await Database.trackedSeriesModel.isTracking(
+            instance.userId,
+            series.id
+          )
+
+          if (!isAlreadyTracking) {
+            let seriesAsin = null
+
+            if (bookWithSeries.asin && isValidASIN(bookWithSeries.asin.toUpperCase())) {
+              const Audible = require('../providers/Audible')
+              const audible = new Audible()
+              const bookData = await audible.asinSearch(bookWithSeries.asin, 'us')
+              const seriesInfo = audible.extractSeriesInfo(bookData)
+              if (seriesInfo?.asin) {
+                seriesAsin = seriesInfo.asin
+              }
+            }
+
+            await Database.trackedSeriesModel.createTrackedSeries({
+              userId: instance.userId,
+              seriesId: series.id,
+              seriesAsin,
+              autoTracked: true,
+              region: 'us'
+            })
+
+            Logger.info(`[MediaProgress] Auto-tracked series "${series.name}" for user ${instance.userId}`)
+          }
+        }
+      } catch (error) {
+        Logger.error(`[MediaProgress] Error auto-tracking series:`, error)
+      }
     })
 
     user.hasMany(MediaProgress, {

@@ -112,6 +112,136 @@ class Audible {
   }
 
   /**
+   * Get books in the same series as the given ASIN
+   * Uses the Audible similarity API
+   *
+   * @param {string} asin - ASIN of a book in the series
+   * @param {string} region
+   * @param {number} [timeout] response timeout in ms
+   * @returns {Promise<Object[]>} Array of cleaned book objects
+   */
+  async getSeriesBooks(asin, region, timeout = this.#responseTimeout) {
+    if (!asin || !isValidASIN(asin.toUpperCase())) {
+      Logger.error('[Audible] getSeriesBooks: Invalid ASIN')
+      return []
+    }
+    if (region && !this.regionMap[region]) {
+      Logger.warn(`[Audible] getSeriesBooks: Invalid region ${region}, defaulting to us`)
+      region = 'us'
+    }
+    if (!timeout || isNaN(timeout)) timeout = this.#responseTimeout
+
+    asin = asin.toUpperCase()
+    const tld = this.regionMap[region] || '.com'
+    const url = `https://api.audible${tld}/1.0/catalog/products/${asin}/sims?similarity_type=InTheSameSeries&num_results=50`
+
+    Logger.debug(`[Audible] Series books URL: ${url}`)
+
+    try {
+      const response = await axios.get(url, { timeout })
+      if (!response?.data?.similar_products) {
+        Logger.debug(`[Audible] No similar products found for ASIN ${asin}`)
+        return []
+      }
+
+      const products = response.data.similar_products
+      const booksWithDetails = await Promise.all(
+        products.map((product) => this.asinSearch(product.asin, region, timeout))
+      )
+
+      const originalBook = await this.asinSearch(asin, region, timeout)
+      if (originalBook) {
+        booksWithDetails.unshift(originalBook)
+      }
+
+      return booksWithDetails.filter(Boolean).map((item) => this.cleanResult(item))
+    } catch (error) {
+      Logger.error(`[Audible] getSeriesBooks error for ASIN ${asin}:`, error.message)
+      return []
+    }
+  }
+
+  /**
+   * Extract series ASIN from a book's metadata
+   * Note: Audnexus returns series with ASIN in the seriesPrimary/seriesSecondary objects
+   *
+   * @param {Object} bookData - Book data from asinSearch
+   * @returns {Object|null} { asin, name, position } or null
+   */
+  extractSeriesInfo(bookData) {
+    if (!bookData) return null
+
+    if (bookData.seriesPrimary?.asin) {
+      return {
+        asin: bookData.seriesPrimary.asin,
+        name: bookData.seriesPrimary.name,
+        position: this.cleanSeriesSequence(bookData.seriesPrimary.name, bookData.seriesPrimary.position)
+      }
+    }
+
+    if (bookData.seriesSecondary?.asin) {
+      return {
+        asin: bookData.seriesSecondary.asin,
+        name: bookData.seriesSecondary.name,
+        position: this.cleanSeriesSequence(bookData.seriesSecondary.name, bookData.seriesSecondary.position)
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Fetch series information directly from Audible API
+   * Used as fallback when Audnexus doesn't provide series data (e.g., German books)
+   *
+   * @param {string} asin - Book ASIN
+   * @param {string} region
+   * @param {number} [timeout] response timeout in ms
+   * @returns {Promise<Object|null>} { asin, name, position } or null
+   */
+  async getSeriesInfoFromAudible(asin, region = 'us', timeout = this.#responseTimeout) {
+    if (!asin || !isValidASIN(asin.toUpperCase())) {
+      return null
+    }
+    if (!timeout || isNaN(timeout)) timeout = this.#responseTimeout
+
+    const tld = this.regionMap[region] || '.com'
+    const url = `https://api.audible${tld}/1.0/catalog/products/${asin.toUpperCase()}?response_groups=series,relationships`
+
+    Logger.debug(`[Audible] Fetching series info from: ${url}`)
+
+    try {
+      const response = await axios.get(url, { timeout })
+      const product = response?.data?.product
+
+      if (product?.series?.[0]?.asin) {
+        const series = product.series[0]
+        return {
+          asin: series.asin,
+          name: series.title,
+          position: this.cleanSeriesSequence(series.title, series.sequence)
+        }
+      }
+
+      if (product?.relationships) {
+        const seriesRelation = product.relationships.find((r) => r.relationship_type === 'series')
+        if (seriesRelation?.asin) {
+          return {
+            asin: seriesRelation.asin,
+            name: seriesRelation.title,
+            position: this.cleanSeriesSequence(seriesRelation.title, seriesRelation.sequence)
+          }
+        }
+      }
+
+      return null
+    } catch (error) {
+      Logger.error(`[Audible] getSeriesInfoFromAudible error for ASIN ${asin}:`, error.message)
+      return null
+    }
+  }
+
+  /**
    *
    * @param {string} title
    * @param {string} author

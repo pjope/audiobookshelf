@@ -17,6 +17,7 @@ const UserController = require('../controllers/UserController')
 const CollectionController = require('../controllers/CollectionController')
 const PlaylistController = require('../controllers/PlaylistController')
 const MeController = require('../controllers/MeController')
+const SeriesTrackingController = require('../controllers/SeriesTrackingController')
 const BackupController = require('../controllers/BackupController')
 const LibraryItemController = require('../controllers/LibraryItemController')
 const SeriesController = require('../controllers/SeriesController')
@@ -183,11 +184,24 @@ class ApiRouter {
     this.router.patch('/me/item/:id/bookmark', MeController.updateBookmark.bind(this))
     this.router.delete('/me/item/:id/bookmark/:time', MeController.removeBookmark.bind(this))
     this.router.patch('/me/password', this.auth.authRateLimiter, MeController.updatePassword.bind(this))
+    this.router.patch('/me/settings', MeController.updateSettings.bind(this))
     this.router.get('/me/items-in-progress', MeController.getAllLibraryItemsInProgress.bind(this))
     this.router.get('/me/series/:id/remove-from-continue-listening', MeController.removeSeriesFromContinueListening.bind(this))
     this.router.get('/me/series/:id/readd-to-continue-listening', MeController.readdSeriesFromContinueListening.bind(this))
     this.router.get('/me/stats/year/:year', MeController.getStatsForYear.bind(this))
     this.router.post('/me/ereader-devices', MeController.updateUserEReaderDevices.bind(this))
+
+    //
+    // Series Tracking Routes (Me)
+    //
+    this.router.post('/me/series/:id/follow', SeriesTrackingController.followSeries.bind(SeriesTrackingController))
+    this.router.delete('/me/series/:id/follow', SeriesTrackingController.unfollowSeries.bind(SeriesTrackingController))
+    this.router.get('/me/tracked-series', SeriesTrackingController.getTrackedSeries.bind(SeriesTrackingController))
+    this.router.get('/me/new-releases', SeriesTrackingController.getNewReleases.bind(SeriesTrackingController))
+    this.router.post('/me/new-releases/:id/dismiss', SeriesTrackingController.dismissRelease.bind(SeriesTrackingController))
+    this.router.post('/me/new-releases/dismiss-all', SeriesTrackingController.dismissAllReleases.bind(SeriesTrackingController))
+    this.router.post('/me/series/:id/check-releases', SeriesTrackingController.checkSeriesReleases.bind(SeriesTrackingController))
+    this.router.get('/series/:id/tracking', SeriesTrackingController.getSeriesTrackingStatus.bind(SeriesTrackingController))
 
     //
     // Backup Routes

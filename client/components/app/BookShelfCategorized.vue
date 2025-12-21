@@ -16,7 +16,7 @@
     <!-- Alternate plain view -->
     <div v-else-if="isAlternativeBookshelfView" class="w-full mb-24e">
       <template v-for="(shelf, index) in supportedShelves">
-        <widgets-item-slider :shelf-id="shelf.id" :key="index + '.'" :items="shelf.entities" :continue-listening-shelf="shelf.id === 'continue-listening' || shelf.id === 'continue-reading'" :type="shelf.type" class="bookshelf-row pl-8e my-6e" @selectEntity="(payload) => selectEntity(payload, index)">
+        <widgets-item-slider :shelf-id="shelf.id" :key="index + '.'" :items="shelf.entities" :continue-listening-shelf="shelf.id === 'continue-listening' || shelf.id === 'continue-reading'" :type="shelf.type" class="bookshelf-row pl-8e my-6e" @selectEntity="(payload) => selectEntity(payload, index)" @dismissRelease="dismissRelease">
           <h2 class="font-semibold text-gray-100">{{ $strings[shelf.labelStringKey] }}</h2>
         </widgets-item-slider>
       </template>
@@ -52,7 +52,7 @@ export default {
   },
   computed: {
     supportedShelves() {
-      return this.shelves.filter((shelf) => ['book', 'podcast', 'episode', 'series', 'authors', 'narrators'].includes(shelf.type))
+      return this.shelves.filter((shelf) => ['book', 'podcast', 'episode', 'series', 'authors', 'narrators', 'newRelease'].includes(shelf.type))
     },
     userIsAdminOrUp() {
       return this.$store.getters['user/getIsAdminOrUp']
@@ -465,6 +465,25 @@ export default {
           })
         }
       })
+    },
+    async dismissRelease(release) {
+      if (!release?.id) return
+
+      try {
+        await this.$axios.$post(`/api/me/new-releases/${release.id}/dismiss`)
+        this.$toast.success(this.$strings.ToastNewReleaseDismissed || 'Release dismissed')
+
+        const newReleasesShelf = this.shelves.find((s) => s.id === 'new-releases')
+        if (newReleasesShelf) {
+          newReleasesShelf.entities = newReleasesShelf.entities.filter((ent) => ent.id !== release.id)
+          if (!newReleasesShelf.entities.length) {
+            this.shelves = this.shelves.filter((s) => s.id !== 'new-releases')
+          }
+        }
+      } catch (error) {
+        console.error('Failed to dismiss release', error)
+        this.$toast.error(this.$strings.ToastFailedToUpdate || 'Failed to update')
+      }
     },
     initListeners() {
       if (this.$root.socket) {

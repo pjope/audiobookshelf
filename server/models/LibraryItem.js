@@ -387,6 +387,22 @@ class LibraryItem extends Model {
         })
       }
       Logger.debug(`Loaded ${continueSeriesPayload.libraryItems.length} of ${continueSeriesPayload.count} items for "Continue Series" in ${((Date.now() - start) / 1000).toFixed(2)}s`)
+
+      start = Date.now()
+      // "New Releases" shelf - external books from tracked series
+      const Database = require('../Database')
+      const newReleasesPayload = await Database.newReleaseModel.getPendingForUser(user.id, limit)
+      if (newReleasesPayload.length) {
+        shelves.push({
+          id: 'new-releases',
+          label: 'New Releases',
+          labelStringKey: 'LabelNewReleases',
+          type: 'newRelease',
+          entities: newReleasesPayload.map((r) => r.toJSON()),
+          total: newReleasesPayload.length
+        })
+      }
+      Logger.debug(`Loaded ${newReleasesPayload.length} releases for "New Releases" in ${((Date.now() - start) / 1000).toFixed(2)}s`)
     } else if (library.isPodcast) {
       // "Newest Episodes" shelf
       const newestEpisodesPayload = await libraryFilters.getNewestPodcastEpisodes(library, user, limit)

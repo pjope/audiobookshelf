@@ -46,6 +46,9 @@
         </div>
         <div class="grow" />
 
+        <!-- Follow Series Button -->
+        <ui-follow-series-button v-if="seriesId" :series-id="seriesId" :show-label="false" :icon-size="1.25" :show-refresh="true" class="mx-1" />
+
         <!-- RSS feed -->
         <ui-tooltip v-if="seriesRssFeed" :text="$strings.LabelOpenRSSFeed" direction="top">
           <ui-icon-btn icon="rss_feed" class="mx-0.5" :size="7" icon-font-size="1.2rem" bg-color="bg-success" outlined @click="showOpenSeriesRSSFeed" />
