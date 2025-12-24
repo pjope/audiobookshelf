@@ -162,6 +162,54 @@ class Audible {
   }
 
   /**
+   * Get all books in a series by series ASIN
+   * First finds a book in the series, then uses /sims endpoint
+   *
+   * @param {string} seriesAsin - ASIN of the series (not a book)
+   * @param {string} region
+   * @param {number} [timeout] response timeout in ms
+   * @returns {Promise<Object[]>} Array of cleaned book objects
+   */
+  async getBooksBySeriesAsin(seriesAsin, region, timeout = this.#responseTimeout) {
+    if (!seriesAsin || !isValidASIN(seriesAsin.toUpperCase())) {
+      Logger.error('[Audible] getBooksBySeriesAsin: Invalid series ASIN')
+      return []
+    }
+    if (region && !this.regionMap[region]) {
+      Logger.warn(`[Audible] getBooksBySeriesAsin: Invalid region ${region}, defaulting to us`)
+      region = 'us'
+    }
+    if (!timeout || isNaN(timeout)) timeout = this.#responseTimeout
+
+    seriesAsin = seriesAsin.toUpperCase()
+    const tld = this.regionMap[region] || '.com'
+
+    // First, get a book ASIN from the series by fetching the series page
+    const seriesUrl = `https://api.audible${tld}/1.0/catalog/products/${seriesAsin}?response_groups=relationships`
+    Logger.debug(`[Audible] Fetching series info: ${seriesUrl}`)
+
+    try {
+      const seriesResponse = await axios.get(seriesUrl, { timeout })
+      const relationships = seriesResponse?.data?.product?.relationships || []
+
+      // Find a child book in the series
+      const childBook = relationships.find(r => r.relationship_to_product === 'child' && r.relationship_type === 'series')
+
+      if (!childBook?.asin) {
+        Logger.debug(`[Audible] No child books found for series ASIN ${seriesAsin}`)
+        return []
+      }
+
+      // Now use the /sims endpoint with the book ASIN
+      Logger.debug(`[Audible] Found book ${childBook.asin} in series, using /sims endpoint`)
+      return await this.getSeriesBooks(childBook.asin, region, timeout)
+    } catch (error) {
+      Logger.error(`[Audible] getBooksBySeriesAsin error for series ASIN ${seriesAsin}:`, error.message)
+      return []
+    }
+  }
+
+  /**
    * Extract series ASIN from a book's metadata
    * Note: Audnexus returns series with ASIN in the seriesPrimary/seriesSecondary objects
    *

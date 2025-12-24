@@ -167,7 +167,7 @@ class NewReleaseManager {
    * @param {string} userId
    */
   emitNewReleasesUpdate(userId) {
-    SocketAuthority.emitter('new_releases_updated', null, userId)
+    SocketAuthority.clientEmitter(userId, 'new_releases_updated', null)
   }
 
   /**

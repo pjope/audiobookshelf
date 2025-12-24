@@ -22,21 +22,21 @@ class SeriesFinder {
   }
 
   /**
-   * Get all books in a series by ASIN
+   * Get all books in a series by series ASIN
    *
-   * @param {string} asin - ASIN of any book in the series
-   * @param {string} region - Audible region (us, uk, etc.)
+   * @param {string} seriesAsin - ASIN of the series
+   * @param {string} region - Audible region (us, uk, de, etc.)
    * @returns {Promise<SeriesBookResult[]>}
    */
-  async getSeriesBooksByAsin(asin, region = 'us') {
-    if (!asin || !isValidASIN(asin.toUpperCase())) {
-      Logger.warn('[SeriesFinder] Invalid ASIN provided')
+  async getSeriesBooksByAsin(seriesAsin, region = 'us') {
+    if (!seriesAsin || !isValidASIN(seriesAsin.toUpperCase())) {
+      Logger.warn('[SeriesFinder] Invalid series ASIN provided')
       return []
     }
 
-    Logger.debug(`[SeriesFinder] Fetching series books for ASIN ${asin} in region ${region}`)
+    Logger.debug(`[SeriesFinder] Fetching series books for series ASIN ${seriesAsin} in region ${region}`)
 
-    const books = await this.audible.getSeriesBooks(asin, region)
+    const books = await this.audible.getBooksBySeriesAsin(seriesAsin, region)
 
     return books.map((book) => ({
       asin: book.asin,

@@ -16,9 +16,9 @@
           </div>
         </div>
 
-        <!-- NEW Badge -->
+        <!-- Available Badge -->
         <div class="absolute rounded-lg box-shadow-md z-20" :style="{ top: 0.375 + 'em', left: 0.375 + 'em', padding: '0.1em 0.5em' }" style="background-color: #dc2626">
-          <p :style="{ fontSize: 0.75 + 'em' }" class="font-bold text-white">{{ $strings.LabelNewBadge || 'NEW' }}</p>
+          <p :style="{ fontSize: 0.75 + 'em' }" class="font-bold text-white">{{ $strings.LabelAvailableBadge || 'AVAILABLE' }}</p>
         </div>
 
         <!-- Series Sequence -->
