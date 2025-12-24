@@ -3,6 +3,37 @@ const Logger = require('../Logger')
 const { isValidASIN } = require('../utils/index')
 
 class Audible {
+  static id = 'audible'
+  static label = 'Audible'
+  static color = '#F7991C'
+
+  static regionTldMap = {
+    us: 'com',
+    ca: 'ca',
+    uk: 'co.uk',
+    au: 'com.au',
+    fr: 'fr',
+    de: 'de',
+    jp: 'co.jp',
+    it: 'it',
+    in: 'in',
+    es: 'es'
+  }
+
+  static getProductUrl(asin, region = 'us') {
+    const tld = this.regionTldMap[region] || 'com'
+    return `https://www.audible.${tld}/pd/${asin}`
+  }
+
+  static getProviderInfo(asin, region = 'us') {
+    return {
+      id: this.id,
+      label: this.label,
+      color: this.color,
+      url: asin ? this.getProductUrl(asin, region) : null
+    }
+  }
+
   #responseTimeout = 10000
 
   constructor() {

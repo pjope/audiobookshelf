@@ -1,4 +1,9 @@
 const { DataTypes, Model, Op, literal } = require('sequelize')
+const Audible = require('../providers/Audible')
+
+const PROVIDERS = {
+  audible: Audible
+}
 
 class NewRelease extends Model {
   constructor(values, options) {
@@ -239,6 +244,21 @@ class NewRelease extends Model {
     })
   }
 
+  getProviderInfo() {
+    const ProviderClass = PROVIDERS[this.provider]
+    if (ProviderClass?.getProviderInfo) {
+      const region = this.trackedSeries?.region || 'us'
+      return ProviderClass.getProviderInfo(this.asin, region)
+    }
+
+    return {
+      id: this.provider,
+      label: this.provider,
+      color: '#666666',
+      url: null
+    }
+  }
+
   toJSON() {
     const seriesData = this.trackedSeries?.series?.toOldJSON?.() || null
 
@@ -252,7 +272,7 @@ class NewRelease extends Model {
       coverUrl: this.coverUrl,
       releaseDate: this.releaseDate,
       sequence: this.sequence,
-      provider: this.provider,
+      provider: this.getProviderInfo(),
       dismissed: this.dismissed,
       discoveredAt: this.discoveredAt?.valueOf() || null,
       createdAt: this.createdAt.valueOf(),

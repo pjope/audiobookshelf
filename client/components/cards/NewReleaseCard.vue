@@ -17,9 +17,16 @@
         </div>
 
         <!-- Available Badge -->
-        <div class="absolute rounded-lg box-shadow-md z-20" :style="{ top: 0.375 + 'em', left: 0.375 + 'em', padding: '0.1em 0.5em' }" style="background-color: #dc2626">
+        <div class="absolute rounded-lg box-shadow-md z-20" :style="{ top: 0.375 + 'em', left: 0.375 + 'em', padding: '0.1em 0.5em' }" style="background-color: #0d9488">
           <p :style="{ fontSize: 0.75 + 'em' }" class="font-bold text-white">{{ $strings.LabelAvailableBadge || 'AVAILABLE' }}</p>
         </div>
+
+        <!-- Provider Badge (visible on hover, clickable to open provider) -->
+        <transition name="slide-in">
+          <div v-if="provider && isHovering" class="absolute rounded-lg box-shadow-md z-30 cursor-pointer hover:scale-105 transform" :style="{ bottom: 0.375 + 'em', left: 0.375 + 'em', padding: '0.1em 0.5em', backgroundColor: providerColor }" @click.stop.prevent="openProvider">
+            <p :style="{ fontSize: 0.65 + 'em' }" class="font-bold text-white">{{ providerLabel }}</p>
+          </div>
+        </transition>
 
         <!-- Series Sequence -->
         <div v-if="sequence" class="absolute rounded-lg bg-black/90 box-shadow-md z-20" :style="{ top: 0.375 + 'em', right: 0.375 + 'em', padding: '0.1em 0.25em' }" style="background-color: #78350f">
@@ -28,8 +35,7 @@
 
         <!-- Hover Overlay -->
         <div v-show="release && isHovering" class="w-full h-full absolute top-0 left-0 z-10 bg-black/50 rounded-sm flex flex-col items-center justify-center" :style="{ padding: 0.5 + 'em' }">
-          <span class="material-symbols text-white" :style="{ fontSize: 2 + 'em' }">open_in_new</span>
-          <p class="text-white text-center mt-1" :style="{ fontSize: 0.7 + 'em' }">{{ $strings.LabelNotInLibrary || 'Not in Library' }}</p>
+          <p class="text-white text-center" :style="{ fontSize: 0.75 + 'em' }">{{ $strings.LabelNotInLibrary || 'Not in Library' }}</p>
         </div>
 
         <!-- Dismiss Button -->
@@ -126,6 +132,18 @@ export default {
     seriesName() {
       return this._release.trackedSeries?.series?.name || this._release.seriesName || null
     },
+    provider() {
+      return this._release.provider || null
+    },
+    providerColor() {
+      return this.provider?.color || '#666666'
+    },
+    providerLabel() {
+      return this.provider?.label || ''
+    },
+    providerUrl() {
+      return this.provider?.url || null
+    },
     titleCleaned() {
       if (!this.title) return ''
       if (this.title.length > 60) {
@@ -151,11 +169,12 @@ export default {
       })
     },
     clickCard() {
-      if (this.asin) {
-        const audibleUrl = `https://www.audible.com/pd/${this.asin}`
-        window.open(audibleUrl, '_blank')
-      }
       this.$emit('click', this.release)
+    },
+    openProvider() {
+      if (this.providerUrl) {
+        window.open(this.providerUrl, '_blank')
+      }
     },
     dismissRelease() {
       this.$emit('dismiss', this.release)
@@ -194,5 +213,22 @@ export default {
 .grayscale:hover,
 .hover\:grayscale-50:hover {
   filter: grayscale(50%);
+}
+
+.slide-in-enter-active {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+.slide-in-leave-active {
+  transition: transform 0.15s ease-in, opacity 0.15s ease-in;
+}
+.slide-in-enter,
+.slide-in-leave-to {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+.slide-in-enter-to,
+.slide-in-leave {
+  transform: translateX(0);
+  opacity: 1;
 }
 </style>
