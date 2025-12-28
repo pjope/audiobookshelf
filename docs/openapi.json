@@ -30,6 +30,10 @@
       "description": "Series endpoints"
     },
     {
+      "name": "Series Tracking",
+      "description": "Series tracking and new release notification endpoints"
+    },
+    {
       "name": "Email",
       "description": "Email endpoints"
     },
@@ -2191,6 +2195,309 @@
           }
         }
       }
+    },
+    "/api/series/{id}/tracking": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The ID of the series.",
+          "required": true,
+          "schema": {
+            "$ref": "#/components/schemas/seriesId"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getSeriesTrackingStatus",
+        "tags": [
+          "Series Tracking"
+        ],
+        "summary": "Get tracking status",
+        "description": "Check if the current user is tracking a specific series.",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved tracking status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/trackingStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/series/{id}/follow": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The ID of the series.",
+          "required": true,
+          "schema": {
+            "$ref": "#/components/schemas/seriesId"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "followSeries",
+        "tags": [
+          "Series Tracking"
+        ],
+        "summary": "Follow a series",
+        "description": "Start tracking a series for new release notifications. Automatically detects the Audible region from the library provider settings.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "description": "The Audible region to use for checking releases. If not provided, will be detected from library settings.",
+                    "example": "us"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully following the series.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/trackedSeries"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/responses-series404"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "unfollowSeries",
+        "tags": [
+          "Series Tracking"
+        ],
+        "summary": "Unfollow a series",
+        "description": "Stop tracking a series for new release notifications.",
+        "responses": {
+          "200": {
+            "description": "Successfully unfollowed the series.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/trackedSeries404"
+          }
+        }
+      }
+    },
+    "/api/me/series/{id}/check-releases": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The ID of the series.",
+          "required": true,
+          "schema": {
+            "$ref": "#/components/schemas/seriesId"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "checkSeriesReleases",
+        "tags": [
+          "Series Tracking"
+        ],
+        "summary": "Check for new releases",
+        "description": "Manually trigger a check for new releases in a tracked series.",
+        "responses": {
+          "200": {
+            "description": "Successfully checked for new releases.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/checkReleasesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/trackedSeries404"
+          }
+        }
+      }
+    },
+    "/api/me/tracked-series": {
+      "get": {
+        "operationId": "getTrackedSeries",
+        "tags": [
+          "Series Tracking"
+        ],
+        "summary": "Get tracked series",
+        "description": "Get all series the current user is tracking.",
+        "parameters": [
+          {
+            "name": "include",
+            "in": "query",
+            "description": "What to include with the tracked series.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newReleases"
+              ],
+              "example": "newReleases"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved tracked series.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "trackedSeries": {
+                      "$ref": "#/components/schemas/trackedSeriesArray"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/new-releases": {
+      "get": {
+        "operationId": "getNewReleases",
+        "tags": [
+          "Series Tracking"
+        ],
+        "summary": "Get new releases",
+        "description": "Get all pending (not dismissed) new releases for the current user's tracked series.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of releases to return.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "example": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved new releases.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/newReleasesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/new-releases/{id}/dismiss": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The ID of the new release.",
+          "required": true,
+          "schema": {
+            "$ref": "#/components/schemas/newReleaseId"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "dismissRelease",
+        "tags": [
+          "Series Tracking"
+        ],
+        "summary": "Dismiss a release",
+        "description": "Dismiss a new release notification so it no longer appears in the user's feed.",
+        "responses": {
+          "200": {
+            "description": "Successfully dismissed the release.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/release404"
+          }
+        }
+      }
+    },
+    "/api/me/new-releases/dismiss-all": {
+      "post": {
+        "operationId": "dismissAllReleases",
+        "tags": [
+          "Series Tracking"
+        ],
+        "summary": "Dismiss all releases",
+        "description": "Dismiss all new release notifications for the current user.",
+        "responses": {
+          "200": {
+            "description": "Successfully dismissed all releases.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "dismissed": {
+                      "type": "integer",
+                      "description": "The number of releases that were dismissed.",
+                      "example": 5
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4002,6 +4309,235 @@
             "description": "The timestamp of the most recently published episode."
           }
         }
+      },
+      "trackedSeriesId": {
+        "type": "string",
+        "description": "The ID of the tracked series.",
+        "format": "uuid",
+        "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      },
+      "newReleaseId": {
+        "type": "string",
+        "description": "The ID of the new release.",
+        "format": "uuid",
+        "example": "b2c3d4e5-f6a7-8901-bcde-f23456789012"
+      },
+      "providerInfo": {
+        "type": "object",
+        "description": "Information about the provider where this release is available.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The provider identifier.",
+            "example": "audible"
+          },
+          "label": {
+            "type": "string",
+            "description": "The display name of the provider.",
+            "example": "Audible"
+          },
+          "color": {
+            "type": "string",
+            "description": "The brand color of the provider in hex format.",
+            "example": "#F7991C"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "description": "The URL to the book on the provider's website.",
+            "example": "https://www.audible.com/pd/B0EXAMPLE1"
+          }
+        }
+      },
+      "newRelease": {
+        "type": "object",
+        "description": "A new release detected for a tracked series.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/newReleaseId"
+          },
+          "trackedSeriesId": {
+            "$ref": "#/components/schemas/trackedSeriesId"
+          },
+          "asin": {
+            "type": "string",
+            "description": "The ASIN of the book.",
+            "example": "B0NEWBOOK1"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the book.",
+            "example": "The Final Chapter"
+          },
+          "author": {
+            "type": "string",
+            "nullable": true,
+            "description": "The author of the book.",
+            "example": "John Smith"
+          },
+          "narrator": {
+            "type": "string",
+            "nullable": true,
+            "description": "The narrator of the audiobook.",
+            "example": "Jane Doe"
+          },
+          "coverUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "The URL of the book cover image.",
+            "example": "https://example.com/cover.jpg"
+          },
+          "releaseDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "The release date of the book.",
+            "example": "2024-06-15"
+          },
+          "sequence": {
+            "type": "string",
+            "nullable": true,
+            "description": "The book's position in the series.",
+            "example": "5"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/providerInfo"
+          },
+          "dismissed": {
+            "type": "boolean",
+            "description": "Whether the user has dismissed this release notification.",
+            "default": false
+          },
+          "discoveredAt": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The time (in ms since POSIX epoch) when the release was discovered.",
+            "example": 1633522963509
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/createdAt"
+          },
+          "series": {
+            "$ref": "#/components/schemas/series",
+            "nullable": true,
+            "description": "The series object when expanded."
+          }
+        }
+      },
+      "trackedSeries": {
+        "type": "object",
+        "description": "A tracked series object representing a user's subscription to a series for new release notifications.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/trackedSeriesId"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The ID of the user tracking the series."
+          },
+          "seriesId": {
+            "$ref": "#/components/schemas/seriesId"
+          },
+          "seriesAsin": {
+            "type": "string",
+            "nullable": true,
+            "description": "The ASIN of the series on Audible.",
+            "example": "B0EXAMPLE1"
+          },
+          "autoTracked": {
+            "type": "boolean",
+            "description": "Whether this series was automatically tracked based on user settings.",
+            "default": false
+          },
+          "region": {
+            "type": "string",
+            "description": "The Audible region to check for new releases.",
+            "default": "us",
+            "example": "us"
+          },
+          "lastChecked": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The time (in ms since POSIX epoch) when releases were last checked.",
+            "example": 1633522963509
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/createdAt"
+          },
+          "updatedAt": {
+            "$ref": "#/components/schemas/updatedAt"
+          },
+          "series": {
+            "$ref": "#/components/schemas/series",
+            "nullable": true,
+            "description": "The series object when expanded."
+          },
+          "newReleases": {
+            "type": "array",
+            "description": "New releases for this tracked series when expanded.",
+            "items": {
+              "$ref": "#/components/schemas/newRelease"
+            }
+          }
+        }
+      },
+      "trackingStatus": {
+        "type": "object",
+        "description": "The tracking status for a series.",
+        "properties": {
+          "isTracking": {
+            "type": "boolean",
+            "description": "Whether the user is tracking this series."
+          },
+          "trackedSeries": {
+            "$ref": "#/components/schemas/trackedSeries",
+            "nullable": true,
+            "description": "The tracked series object if tracking, null otherwise."
+          }
+        }
+      },
+      "newReleaseArray": {
+        "type": "array",
+        "description": "An array of new releases.",
+        "items": {
+          "$ref": "#/components/schemas/newRelease"
+        }
+      },
+      "checkReleasesResponse": {
+        "type": "object",
+        "description": "Response from a manual release check.",
+        "properties": {
+          "newReleases": {
+            "$ref": "#/components/schemas/newReleaseArray"
+          },
+          "count": {
+            "type": "integer",
+            "description": "The number of new releases found.",
+            "example": 2
+          }
+        }
+      },
+      "trackedSeriesArray": {
+        "type": "array",
+        "description": "An array of tracked series.",
+        "items": {
+          "$ref": "#/components/schemas/trackedSeries"
+        }
+      },
+      "newReleasesResponse": {
+        "type": "object",
+        "description": "Response containing new releases.",
+        "properties": {
+          "releases": {
+            "$ref": "#/components/schemas/newReleaseArray"
+          },
+          "total": {
+            "type": "integer",
+            "description": "The total number of releases.",
+            "example": 5
+          }
+        }
       }
     },
     "responses": {
@@ -4094,6 +4630,54 @@
             "schema": {
               "type": "string",
               "example": "Series not found."
+            }
+          }
+        }
+      },
+      "responses-series404": {
+        "description": "Series not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Series not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "trackedSeries404": {
+        "description": "Not tracking this series.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Not tracking this series"
+                }
+              }
+            }
+          }
+        }
+      },
+      "release404": {
+        "description": "Release not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Release not found"
+                }
+              }
             }
           }
         }

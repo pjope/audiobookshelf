@@ -77,6 +77,20 @@ paths:
     $ref: './controllers/PodcastController.yaml#/paths/~1api~1podcasts~1{id}~1episode~1{episodeId}'
   /api/series/{id}:
     $ref: './controllers/SeriesController.yaml#/paths/~1api~1series~1{id}'
+  /api/series/{id}/tracking:
+    $ref: './controllers/SeriesTrackingController.yaml#/paths/~1api~1series~1{id}~1tracking'
+  /api/me/series/{id}/follow:
+    $ref: './controllers/SeriesTrackingController.yaml#/paths/~1api~1me~1series~1{id}~1follow'
+  /api/me/series/{id}/check-releases:
+    $ref: './controllers/SeriesTrackingController.yaml#/paths/~1api~1me~1series~1{id}~1check-releases'
+  /api/me/tracked-series:
+    $ref: './controllers/SeriesTrackingController.yaml#/paths/~1api~1me~1tracked-series'
+  /api/me/new-releases:
+    $ref: './controllers/SeriesTrackingController.yaml#/paths/~1api~1me~1new-releases'
+  /api/me/new-releases/{id}/dismiss:
+    $ref: './controllers/SeriesTrackingController.yaml#/paths/~1api~1me~1new-releases~1{id}~1dismiss'
+  /api/me/new-releases/dismiss-all:
+    $ref: './controllers/SeriesTrackingController.yaml#/paths/~1api~1me~1new-releases~1dismiss-all'
 tags:
   - name: Authors
     description: Author endpoints
@@ -84,6 +98,8 @@ tags:
     description: Library endpoints
   - name: Series
     description: Series endpoints
+  - name: Series Tracking
+    description: Series tracking and new release notification endpoints
   - name: Email
     description: Email endpoints
   - name: Notification

@@ -1,0 +1,112 @@
+components:
+  schemas:
+    newReleaseId:
+      type: string
+      description: The ID of the new release.
+      format: uuid
+      example: b2c3d4e5-f6a7-8901-bcde-f23456789012
+    providerInfo:
+      type: object
+      description: Information about the provider where this release is available.
+      properties:
+        id:
+          type: string
+          description: The provider identifier.
+          example: audible
+        label:
+          type: string
+          description: The display name of the provider.
+          example: Audible
+        color:
+          type: string
+          description: The brand color of the provider in hex format.
+          example: '#F7991C'
+        url:
+          type: string
+          nullable: true
+          description: The URL to the book on the provider's website.
+          example: https://www.audible.com/pd/B0EXAMPLE1
+    newRelease:
+      type: object
+      description: A new release detected for a tracked series.
+      properties:
+        id:
+          $ref: '#/components/schemas/newReleaseId'
+        trackedSeriesId:
+          $ref: './TrackedSeries.yaml#/components/schemas/trackedSeriesId'
+        asin:
+          type: string
+          description: The ASIN of the book.
+          example: B0NEWBOOK1
+        title:
+          type: string
+          description: The title of the book.
+          example: 'The Final Chapter'
+        author:
+          type: string
+          nullable: true
+          description: The author of the book.
+          example: 'John Smith'
+        narrator:
+          type: string
+          nullable: true
+          description: The narrator of the audiobook.
+          example: 'Jane Doe'
+        coverUrl:
+          type: string
+          nullable: true
+          description: The URL of the book cover image.
+          example: https://example.com/cover.jpg
+        releaseDate:
+          type: string
+          format: date
+          nullable: true
+          description: The release date of the book.
+          example: '2024-06-15'
+        sequence:
+          type: string
+          nullable: true
+          description: The book's position in the series.
+          example: '5'
+        provider:
+          $ref: '#/components/schemas/providerInfo'
+        dismissed:
+          type: boolean
+          description: Whether the user has dismissed this release notification.
+          default: false
+        discoveredAt:
+          type: integer
+          nullable: true
+          description: The time (in ms since POSIX epoch) when the release was discovered.
+          example: 1633522963509
+        createdAt:
+          $ref: '../../schemas.yaml#/components/schemas/createdAt'
+        series:
+          $ref: './Series.yaml#/components/schemas/series'
+          nullable: true
+          description: The series object when expanded.
+    newReleaseArray:
+      type: array
+      description: An array of new releases.
+      items:
+        $ref: '#/components/schemas/newRelease'
+    newReleasesResponse:
+      type: object
+      description: Response containing new releases.
+      properties:
+        releases:
+          $ref: '#/components/schemas/newReleaseArray'
+        total:
+          type: integer
+          description: The total number of releases.
+          example: 5
+    checkReleasesResponse:
+      type: object
+      description: Response from a manual release check.
+      properties:
+        newReleases:
+          $ref: '#/components/schemas/newReleaseArray'
+        count:
+          type: integer
+          description: The number of new releases found.
+          example: 2

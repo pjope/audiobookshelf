@@ -1,0 +1,67 @@
+components:
+  schemas:
+    trackedSeriesId:
+      type: string
+      description: The ID of the tracked series.
+      format: uuid
+      example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+    trackedSeries:
+      type: object
+      description: A tracked series object representing a user's subscription to a series for new release notifications.
+      properties:
+        id:
+          $ref: '#/components/schemas/trackedSeriesId'
+        userId:
+          type: string
+          format: uuid
+          description: The ID of the user tracking the series.
+        seriesId:
+          $ref: './Series.yaml#/components/schemas/seriesId'
+        seriesAsin:
+          type: string
+          nullable: true
+          description: The ASIN of the series on Audible.
+          example: B0EXAMPLE1
+        autoTracked:
+          type: boolean
+          description: Whether this series was automatically tracked based on user settings.
+          default: false
+        region:
+          type: string
+          description: The Audible region to check for new releases.
+          default: us
+          example: us
+        lastChecked:
+          type: integer
+          nullable: true
+          description: The time (in ms since POSIX epoch) when releases were last checked.
+          example: 1633522963509
+        createdAt:
+          $ref: '../../schemas.yaml#/components/schemas/createdAt'
+        updatedAt:
+          $ref: '../../schemas.yaml#/components/schemas/updatedAt'
+        series:
+          $ref: './Series.yaml#/components/schemas/series'
+          nullable: true
+          description: The series object when expanded.
+        newReleases:
+          type: array
+          description: New releases for this tracked series when expanded.
+          items:
+            $ref: './NewRelease.yaml#/components/schemas/newRelease'
+    trackedSeriesArray:
+      type: array
+      description: An array of tracked series.
+      items:
+        $ref: '#/components/schemas/trackedSeries'
+    trackingStatus:
+      type: object
+      description: The tracking status for a series.
+      properties:
+        isTracking:
+          type: boolean
+          description: Whether the user is tracking this series.
+        trackedSeries:
+          $ref: '#/components/schemas/trackedSeries'
+          nullable: true
+          description: The tracked series object if tracking, null otherwise.

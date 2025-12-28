@@ -1,0 +1,228 @@
+components:
+  responses:
+    trackedSeries404:
+      description: Not tracking this series.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Not tracking this series
+    release404:
+      description: Release not found.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Release not found
+    series404:
+      description: Series not found.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Series not found
+paths:
+  /api/me/series/{id}/follow:
+    parameters:
+      - name: id
+        in: path
+        description: The ID of the series.
+        required: true
+        schema:
+          $ref: '../objects/entities/Series.yaml#/components/schemas/seriesId'
+    post:
+      operationId: followSeries
+      tags:
+        - Series Tracking
+      summary: Follow a series
+      description: Start tracking a series for new release notifications. Automatically detects the Audible region from the library provider settings.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                region:
+                  type: string
+                  description: The Audible region to use for checking releases. If not provided, will be detected from library settings.
+                  example: us
+      responses:
+        '200':
+          description: Successfully following the series.
+          content:
+            application/json:
+              schema:
+                $ref: '../objects/entities/TrackedSeries.yaml#/components/schemas/trackedSeries'
+        '404':
+          $ref: '#/components/responses/series404'
+    delete:
+      operationId: unfollowSeries
+      tags:
+        - Series Tracking
+      summary: Unfollow a series
+      description: Stop tracking a series for new release notifications.
+      responses:
+        '200':
+          description: Successfully unfollowed the series.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          $ref: '#/components/responses/trackedSeries404'
+  /api/me/series/{id}/check-releases:
+    parameters:
+      - name: id
+        in: path
+        description: The ID of the series.
+        required: true
+        schema:
+          $ref: '../objects/entities/Series.yaml#/components/schemas/seriesId'
+    post:
+      operationId: checkSeriesReleases
+      tags:
+        - Series Tracking
+      summary: Check for new releases
+      description: Manually trigger a check for new releases in a tracked series.
+      responses:
+        '200':
+          description: Successfully checked for new releases.
+          content:
+            application/json:
+              schema:
+                $ref: '../objects/entities/NewRelease.yaml#/components/schemas/checkReleasesResponse'
+        '404':
+          $ref: '#/components/responses/trackedSeries404'
+  /api/me/tracked-series:
+    get:
+      operationId: getTrackedSeries
+      tags:
+        - Series Tracking
+      summary: Get tracked series
+      description: Get all series the current user is tracking.
+      parameters:
+        - name: include
+          in: query
+          description: What to include with the tracked series.
+          required: false
+          schema:
+            type: string
+            enum: [newReleases]
+            example: newReleases
+      responses:
+        '200':
+          description: Successfully retrieved tracked series.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trackedSeries:
+                    $ref: '../objects/entities/TrackedSeries.yaml#/components/schemas/trackedSeriesArray'
+  /api/me/new-releases:
+    get:
+      operationId: getNewReleases
+      tags:
+        - Series Tracking
+      summary: Get new releases
+      description: Get all pending (not dismissed) new releases for the current user's tracked series.
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of releases to return.
+          required: false
+          schema:
+            type: integer
+            default: 50
+            example: 50
+      responses:
+        '200':
+          description: Successfully retrieved new releases.
+          content:
+            application/json:
+              schema:
+                $ref: '../objects/entities/NewRelease.yaml#/components/schemas/newReleasesResponse'
+  /api/me/new-releases/{id}/dismiss:
+    parameters:
+      - name: id
+        in: path
+        description: The ID of the new release.
+        required: true
+        schema:
+          $ref: '../objects/entities/NewRelease.yaml#/components/schemas/newReleaseId'
+    post:
+      operationId: dismissRelease
+      tags:
+        - Series Tracking
+      summary: Dismiss a release
+      description: Dismiss a new release notification so it no longer appears in the user's feed.
+      responses:
+        '200':
+          description: Successfully dismissed the release.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          $ref: '#/components/responses/release404'
+  /api/me/new-releases/dismiss-all:
+    post:
+      operationId: dismissAllReleases
+      tags:
+        - Series Tracking
+      summary: Dismiss all releases
+      description: Dismiss all new release notifications for the current user.
+      responses:
+        '200':
+          description: Successfully dismissed all releases.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  dismissed:
+                    type: integer
+                    description: The number of releases that were dismissed.
+                    example: 5
+  /api/series/{id}/tracking:
+    parameters:
+      - name: id
+        in: path
+        description: The ID of the series.
+        required: true
+        schema:
+          $ref: '../objects/entities/Series.yaml#/components/schemas/seriesId'
+    get:
+      operationId: getSeriesTrackingStatus
+      tags:
+        - Series Tracking
+      summary: Get tracking status
+      description: Check if the current user is tracking a specific series.
+      responses:
+        '200':
+          description: Successfully retrieved tracking status.
+          content:
+            application/json:
+              schema:
+                $ref: '../objects/entities/TrackedSeries.yaml#/components/schemas/trackingStatus'
