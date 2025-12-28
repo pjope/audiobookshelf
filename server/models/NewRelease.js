@@ -52,6 +52,7 @@ class NewRelease extends Model {
       include: [
         {
           model: this.sequelize.models.trackedSeries,
+          as: 'trackedSeries',
           where: { userId },
           required: true,
           include: [
@@ -175,6 +176,7 @@ class NewRelease extends Model {
       include: [
         {
           model: this.sequelize.models.trackedSeries,
+          as: 'trackedSeries',
           where: { userId },
           required: true
         }
@@ -240,7 +242,8 @@ class NewRelease extends Model {
       onDelete: 'CASCADE'
     })
     NewRelease.belongsTo(trackedSeries, {
-      foreignKey: 'trackedSeriesId'
+      foreignKey: 'trackedSeriesId',
+      as: 'trackedSeries'
     })
   }
 
