@@ -172,6 +172,11 @@ class Database {
     return this.models.newRelease
   }
 
+  /** @type {typeof import('./models/NewReleaseProvider')} */
+  get newReleaseProviderModel() {
+    return this.models.newReleaseProvider
+  }
+
   /**
    * Check if db file exists
    * @returns {boolean}
@@ -357,6 +362,7 @@ class Database {
     require('./models/MediaItemShare').init(this.sequelize)
     require('./models/TrackedSeries').init(this.sequelize)
     require('./models/NewRelease').init(this.sequelize)
+    require('./models/NewReleaseProvider').init(this.sequelize)
 
     return this.sequelize.sync({ force, alter: false })
   }

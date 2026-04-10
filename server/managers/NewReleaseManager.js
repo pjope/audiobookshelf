@@ -98,7 +98,7 @@ class NewReleaseManager {
         try {
           const release = await Database.newReleaseModel.createNewRelease({
             trackedSeriesId: trackedSeries.id,
-            asin: book.asin,
+            asin: book.asin || book.externalId,
             title: book.title,
             author: book.author,
             narrator: book.narrator,
@@ -107,11 +107,22 @@ class NewReleaseManager {
             sequence: book.sequence,
             provider: book.provider
           })
+
+          // Add primary provider link
+          await Database.newReleaseProviderModel.addProviderLink(release.id, book.provider, book.externalId || book.asin)
+
+          // Cross-check other providers
+          const otherLinks = await this.seriesFinder.findOtherProviderLinks(book)
+          for (const link of otherLinks) {
+            await Database.newReleaseProviderModel.addProviderLink(release.id, link.provider, link.externalId)
+            Logger.debug(`[NewReleaseManager] Added ${link.provider} link for "${book.title}"`)
+          }
+
           createdReleases.push(release)
           Logger.info(`[NewReleaseManager] New release found: "${book.title}" in series "${seriesName}"`)
         } catch (error) {
           if (error.name === 'SequelizeUniqueConstraintError') {
-            Logger.debug(`[NewReleaseManager] Release already exists: ${book.asin}`)
+            Logger.debug(`[NewReleaseManager] Release already exists: ${book.asin || book.externalId}`)
           } else {
             Logger.error(`[NewReleaseManager] Error creating release record:`, error)
           }

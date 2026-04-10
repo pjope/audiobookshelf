@@ -4401,7 +4401,29 @@
             "example": "5"
           },
           "provider": {
-            "$ref": "#/components/schemas/providerInfo"
+            "$ref": "#/components/schemas/providerInfo",
+            "description": "Primary provider (deprecated, use providers array)."
+          },
+          "providers": {
+            "type": "array",
+            "description": "All providers where this book is available.",
+            "items": {
+              "$ref": "#/components/schemas/providerInfo"
+            },
+            "example": [
+              {
+                "id": "audible",
+                "label": "Audible",
+                "color": "#F7991C",
+                "url": "https://www.audible.com/pd/B0EXAMPLE1"
+              },
+              {
+                "id": "googlebooks",
+                "label": "Google Books",
+                "color": "#4285F4",
+                "url": "https://books.google.com/books?id=ABC123"
+              }
+            ]
           },
           "dismissed": {
             "type": "boolean",

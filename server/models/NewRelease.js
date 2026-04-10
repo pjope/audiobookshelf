@@ -1,8 +1,10 @@
 const { DataTypes, Model, Op, literal } = require('sequelize')
 const Audible = require('../providers/Audible')
+const GoogleBooks = require('../providers/GoogleBooks')
 
 const PROVIDERS = {
-  audible: Audible
+  audible: Audible,
+  googlebooks: GoogleBooks
 }
 
 class NewRelease extends Model {
@@ -61,6 +63,11 @@ class NewRelease extends Model {
               required: true
             }
           ]
+        },
+        {
+          model: this.sequelize.models.newReleaseProvider,
+          as: 'providers',
+          required: false
         }
       ],
       order: [['discoveredAt', 'DESC']],
@@ -83,6 +90,13 @@ class NewRelease extends Model {
 
     return this.findAll({
       where,
+      include: [
+        {
+          model: this.sequelize.models.newReleaseProvider,
+          as: 'providers',
+          required: false
+        }
+      ],
       order: [[literal('CAST(sequence AS FLOAT)'), 'ASC NULLS LAST']]
     })
   }
@@ -264,6 +278,16 @@ class NewRelease extends Model {
 
   toJSON() {
     const seriesData = this.trackedSeries?.series?.toOldJSON?.() || null
+    const region = this.trackedSeries?.region || 'us'
+
+    // Build providers array from the new providers relation
+    let providersArray = []
+    if (this.providers?.length) {
+      providersArray = this.providers.map((p) => p.getProviderInfo(region))
+    } else {
+      // Fallback to legacy single provider for backwards compatibility
+      providersArray = [this.getProviderInfo()]
+    }
 
     return {
       id: this.id,
@@ -276,6 +300,7 @@ class NewRelease extends Model {
       releaseDate: this.releaseDate,
       sequence: this.sequence,
       provider: this.getProviderInfo(),
+      providers: providersArray,
       dismissed: this.dismissed,
       discoveredAt: this.discoveredAt?.valueOf() || null,
       createdAt: this.createdAt.valueOf(),

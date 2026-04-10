@@ -21,10 +21,12 @@
           <p :style="{ fontSize: 0.75 + 'em' }" class="font-bold text-white">{{ $strings.LabelAvailableBadge || 'AVAILABLE' }}</p>
         </div>
 
-        <!-- Provider Badge (visible on hover, clickable to open provider) -->
+        <!-- Provider Badges (visible on hover, clickable to open provider) -->
         <transition name="slide-in">
-          <div v-if="provider && isHovering" class="absolute rounded-lg box-shadow-md z-30 cursor-pointer hover:scale-105 transform" :style="{ bottom: 0.375 + 'em', left: 0.375 + 'em', padding: '0.1em 0.5em', backgroundColor: providerColor }" @click.stop.prevent="openProvider">
-            <p :style="{ fontSize: 0.65 + 'em' }" class="font-bold text-white">{{ providerLabel }}</p>
+          <div v-if="providers.length && isHovering" class="absolute z-30 flex flex-wrap gap-1" :style="{ bottom: 0.375 + 'em', left: 0.375 + 'em', maxWidth: 'calc(100% - 2em)' }">
+            <div v-for="(prov, idx) in providers" :key="idx" class="rounded-lg box-shadow-md cursor-pointer hover:scale-105 transform" :style="{ padding: '0.1em 0.5em', backgroundColor: prov.color || '#666666' }" @click.stop.prevent="openProviderUrl(prov.url)">
+              <p :style="{ fontSize: 0.6 + 'em' }" class="font-bold text-white whitespace-nowrap">{{ prov.label }}</p>
+            </div>
           </div>
         </transition>
 
@@ -132,17 +134,14 @@ export default {
     seriesName() {
       return this._release.trackedSeries?.series?.name || this._release.seriesName || null
     },
-    provider() {
-      return this._release.provider || null
-    },
-    providerColor() {
-      return this.provider?.color || '#666666'
-    },
-    providerLabel() {
-      return this.provider?.label || ''
-    },
-    providerUrl() {
-      return this.provider?.url || null
+    providers() {
+      if (this._release.providers?.length) {
+        return this._release.providers.filter((p) => p && p.url)
+      }
+      if (this._release.provider?.url) {
+        return [this._release.provider]
+      }
+      return []
     },
     titleCleaned() {
       if (!this.title) return ''
@@ -171,9 +170,9 @@ export default {
     clickCard() {
       this.$emit('click', this.release)
     },
-    openProvider() {
-      if (this.providerUrl) {
-        window.open(this.providerUrl, '_blank')
+    openProviderUrl(url) {
+      if (url) {
+        window.open(url, '_blank')
       }
     },
     dismissRelease() {
