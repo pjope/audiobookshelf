@@ -1,11 +1,5 @@
 const { DataTypes, Model, Op, literal } = require('sequelize')
-const Audible = require('../providers/Audible')
-const GoogleBooks = require('../providers/GoogleBooks')
-
-const PROVIDERS = {
-  audible: Audible,
-  googlebooks: GoogleBooks
-}
+const { PROVIDER_CLASSES } = require('../providers/registry')
 
 class NewRelease extends Model {
   constructor(values, options) {
@@ -262,7 +256,7 @@ class NewRelease extends Model {
   }
 
   getProviderInfo() {
-    const ProviderClass = PROVIDERS[this.provider]
+    const ProviderClass = PROVIDER_CLASSES[this.provider]
     if (ProviderClass?.getProviderInfo) {
       const region = this.trackedSeries?.region || 'us'
       return ProviderClass.getProviderInfo(this.asin, region)

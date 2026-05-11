@@ -54,12 +54,10 @@ class SeriesTrackingController {
     const libraryId = accessibleLibraryItems[0].libraryId
     if (libraryId) {
       const library = await Database.libraryModel.findByPk(libraryId)
-      if (library?.provider) {
-        const providerRegionMatch = library.provider.match(/^audible\.(\w+)$/)
-        if (providerRegionMatch) {
-          region = providerRegionMatch[1]
-          Logger.debug(`[SeriesTrackingController] Using region "${region}" from library provider "${library.provider}"`)
-        }
+      const detectedRegion = Audible.regionFromProviderId(library?.provider)
+      if (detectedRegion) {
+        region = detectedRegion
+        Logger.debug(`[SeriesTrackingController] Using region "${region}" from library provider "${library.provider}"`)
       }
     }
 

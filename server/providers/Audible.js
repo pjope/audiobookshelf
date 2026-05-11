@@ -25,6 +25,22 @@ class Audible {
     return `https://www.audible.${tld}/pd/${asin}`
   }
 
+  /**
+   * Extract the Audible region code from a library provider identifier
+   * (e.g. "audible.de" -> "de"). Returns null if the string does not
+   * identify an Audible region known to this provider.
+   *
+   * @param {string} providerString
+   * @returns {string|null}
+   */
+  static regionFromProviderId(providerString) {
+    if (!providerString) return null
+    const match = providerString.match(/^audible\.(\w+)$/)
+    if (!match) return null
+    const region = match[1]
+    return this.regionTldMap[region] ? region : null
+  }
+
   static getProviderInfo(asin, region = 'us') {
     return {
       id: this.id,

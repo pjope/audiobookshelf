@@ -3,6 +3,7 @@ const GoogleBooks = require('../providers/GoogleBooks')
 const Logger = require('../Logger')
 const Database = require('../Database')
 const { isValidASIN } = require('../utils/index')
+const { PROVIDER_IDS } = require('../providers/registry')
 
 /**
  * @typedef {Object} SeriesBookResult
@@ -27,7 +28,7 @@ class SeriesFinder {
   constructor() {
     this.audible = new Audible()
     this.googleBooks = new GoogleBooks()
-    this.providers = ['audible', 'googlebooks']
+    this.providers = [PROVIDER_IDS.AUDIBLE, PROVIDER_IDS.GOOGLE_BOOKS]
   }
 
   /**
@@ -39,16 +40,16 @@ class SeriesFinder {
     for (const book of libraryBooks) {
       const metadata = book.media?.metadata || book
       if (metadata.asin && isValidASIN(metadata.asin.toUpperCase())) {
-        return 'audible'
+        return PROVIDER_IDS.AUDIBLE
       }
     }
     for (const book of libraryBooks) {
       const metadata = book.media?.metadata || book
       if (metadata.isbn) {
-        return 'googlebooks'
+        return PROVIDER_IDS.GOOGLE_BOOKS
       }
     }
-    return 'audible'
+    return PROVIDER_IDS.AUDIBLE
   }
 
   /**
@@ -77,7 +78,7 @@ class SeriesFinder {
       coverUrl: book.cover,
       releaseDate: book.publishedYear,
       sequence: book.series?.[0]?.sequence || null,
-      provider: 'audible'
+      provider: PROVIDER_IDS.AUDIBLE
     }))
   }
 
@@ -106,7 +107,7 @@ class SeriesFinder {
       coverUrl: book.cover,
       releaseDate: book.publishedYear,
       sequence: book.series?.[0]?.sequence || null,
-      provider: 'googlebooks'
+      provider: PROVIDER_IDS.GOOGLE_BOOKS
     }))
   }
 
@@ -122,13 +123,13 @@ class SeriesFinder {
 
     if (!book.title) return links
 
-    if (book.provider !== 'audible') {
+    if (book.provider !== PROVIDER_IDS.AUDIBLE) {
       try {
         const audibleResults = await this.audible.search(book.title, book.author, null, 'us')
         if (audibleResults.length > 0) {
           const match = audibleResults.find((r) => this.titleMatch(r.title, book.title))
           if (match?.asin) {
-            links.push({ provider: 'audible', externalId: match.asin })
+            links.push({ provider: PROVIDER_IDS.AUDIBLE, externalId: match.asin })
           }
         }
       } catch (error) {
@@ -136,13 +137,13 @@ class SeriesFinder {
       }
     }
 
-    if (book.provider !== 'googlebooks') {
+    if (book.provider !== PROVIDER_IDS.GOOGLE_BOOKS) {
       try {
         const googleResults = await this.googleBooks.search(book.title, book.author)
         if (googleResults.length > 0) {
           const match = googleResults.find((r) => this.titleMatch(r.title, book.title))
           if (match?.id) {
-            links.push({ provider: 'googlebooks', externalId: match.id })
+            links.push({ provider: PROVIDER_IDS.GOOGLE_BOOKS, externalId: match.id })
           }
         }
       } catch (error) {
@@ -274,7 +275,7 @@ class SeriesFinder {
         const seriesInfo = await this.findSeriesAsinFromBook(book.asin, region)
         if (seriesInfo?.asin) {
           Logger.debug(`[SeriesFinder] Found Audible series ASIN ${seriesInfo.asin} from book ${book.asin}`)
-          return { provider: 'audible', seriesExternalId: seriesInfo.asin }
+          return { provider: PROVIDER_IDS.AUDIBLE, seriesExternalId: seriesInfo.asin }
         }
       }
     }
@@ -286,7 +287,7 @@ class SeriesFinder {
         const seriesInfo = await this.findSeriesIdFromIsbn(isbn)
         if (seriesInfo?.seriesId) {
           Logger.debug(`[SeriesFinder] Found Google Books series ${seriesInfo.seriesId} from ISBN ${isbn}`)
-          return { provider: 'googlebooks', seriesExternalId: seriesInfo.seriesId }
+          return { provider: PROVIDER_IDS.GOOGLE_BOOKS, seriesExternalId: seriesInfo.seriesId }
         }
       }
     }
@@ -305,7 +306,7 @@ class SeriesFinder {
    */
   async findSeriesAsinFromLibrary(seriesId, region = 'us') {
     const result = await this.findSeriesIdentifierFromLibrary(seriesId, region)
-    if (result?.provider === 'audible') {
+    if (result?.provider === PROVIDER_IDS.AUDIBLE) {
       return result.seriesExternalId
     }
     return null
