@@ -201,6 +201,10 @@ class TrackedSeries extends Model {
           },
           {
             fields: ['seriesId']
+          },
+          {
+            fields: ['lastChecked'],
+            name: 'tracked_series_last_checked'
           }
         ]
       }

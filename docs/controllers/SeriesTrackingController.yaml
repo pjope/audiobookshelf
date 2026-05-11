@@ -30,6 +30,18 @@ components:
               error:
                 type: string
                 example: Series not found
+    invalidRegion400:
+      description: Invalid region supplied.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Invalid region
+    seriesAccess403:
+      description: User does not have access to any books in the series.
 paths:
   /api/me/series/{id}/follow:
     parameters:
@@ -63,6 +75,10 @@ paths:
             application/json:
               schema:
                 $ref: '../objects/entities/TrackedSeries.yaml#/components/schemas/trackedSeries'
+        '400':
+          $ref: '#/components/responses/invalidRegion400'
+        '403':
+          $ref: '#/components/responses/seriesAccess403'
         '404':
           $ref: '#/components/responses/series404'
     delete:
@@ -105,6 +121,8 @@ paths:
             application/json:
               schema:
                 $ref: '../objects/entities/NewRelease.yaml#/components/schemas/checkReleasesResponse'
+        '403':
+          $ref: '#/components/responses/seriesAccess403'
         '404':
           $ref: '#/components/responses/trackedSeries404'
   /api/me/tracked-series:
@@ -226,3 +244,7 @@ paths:
             application/json:
               schema:
                 $ref: '../objects/entities/TrackedSeries.yaml#/components/schemas/trackingStatus'
+        '403':
+          $ref: '#/components/responses/seriesAccess403'
+        '404':
+          $ref: '#/components/responses/series404'
