@@ -3,6 +3,8 @@ const Logger = require('../Logger')
 const Database = require('../Database')
 const NewReleaseManager = require('../managers/NewReleaseManager')
 const SeriesFinder = require('../finders/SeriesFinder')
+const Audible = require('../providers/Audible')
+const libraryItemsBookFilters = require('../utils/queries/libraryItemsBookFilters')
 
 /**
  * @typedef RequestUserObject
@@ -27,10 +29,20 @@ class SeriesTrackingController {
     const seriesId = req.params.id
     const userId = req.user.id
 
+    if (req.body.region && !Audible.regionTldMap[req.body.region]) {
+      return res.status(400).json({ error: 'Invalid region' })
+    }
+
     const series = await Database.seriesModel.findByPk(seriesId)
     if (!series) {
       Logger.warn(`[SeriesTrackingController] Series not found: ${seriesId}`)
       return res.status(404).json({ error: 'Series not found' })
+    }
+
+    const accessibleLibraryItems = await libraryItemsBookFilters.getLibraryItemsForSeries(series, req.user)
+    if (!accessibleLibraryItems.length) {
+      Logger.warn(`[SeriesTrackingController] User ${userId} has no access to series ${seriesId}`)
+      return res.sendStatus(403)
     }
 
     const existing = await Database.trackedSeriesModel.getByUserAndSeries(userId, seriesId)
@@ -38,11 +50,10 @@ class SeriesTrackingController {
       return res.json(existing.toJSON())
     }
 
-    const libraryBooks = await series.getBooksExpandedWithLibraryItem()
-
     let region = req.body.region || 'us'
-    if (libraryBooks.length > 0 && libraryBooks[0].libraryItem?.libraryId) {
-      const library = await Database.libraryModel.findByPk(libraryBooks[0].libraryItem.libraryId)
+    const libraryId = accessibleLibraryItems[0].libraryId
+    if (libraryId) {
+      const library = await Database.libraryModel.findByPk(libraryId)
       if (library?.provider) {
         const providerRegionMatch = library.provider.match(/^audible\.(\w+)$/)
         if (providerRegionMatch) {
@@ -53,9 +64,10 @@ class SeriesTrackingController {
     }
 
     let seriesAsin = null
-    for (const book of libraryBooks) {
-      if (book.asin) {
-        const seriesInfo = await this.seriesFinder.findSeriesAsinFromBook(book.asin, region)
+    for (const libraryItem of accessibleLibraryItems) {
+      const bookAsin = libraryItem.media?.asin
+      if (bookAsin) {
+        const seriesInfo = await this.seriesFinder.findSeriesAsinFromBook(bookAsin, region)
         if (seriesInfo?.asin) {
           seriesAsin = seriesInfo.asin
           break
@@ -201,6 +213,16 @@ class SeriesTrackingController {
     const seriesId = req.params.id
     const userId = req.user.id
 
+    const series = await Database.seriesModel.findByPk(seriesId)
+    if (!series) {
+      return res.status(404).json({ error: 'Series not found' })
+    }
+
+    const accessibleLibraryItems = await libraryItemsBookFilters.getLibraryItemsForSeries(series, req.user)
+    if (!accessibleLibraryItems.length) {
+      return res.sendStatus(403)
+    }
+
     const isTracking = await Database.trackedSeriesModel.isTracking(userId, seriesId)
     const trackedSeries = isTracking
       ? await Database.trackedSeriesModel.getByUserAndSeries(userId, seriesId)
@@ -226,6 +248,14 @@ class SeriesTrackingController {
     const trackedSeries = await Database.trackedSeriesModel.getByUserAndSeries(userId, seriesId)
     if (!trackedSeries) {
       return res.status(404).json({ error: 'Not tracking this series' })
+    }
+
+    const series = await Database.seriesModel.findByPk(seriesId)
+    if (series) {
+      const accessibleLibraryItems = await libraryItemsBookFilters.getLibraryItemsForSeries(series, req.user)
+      if (!accessibleLibraryItems.length) {
+        return res.sendStatus(403)
+      }
     }
 
     const newReleases = await NewReleaseManager.manualCheck(trackedSeries.id)

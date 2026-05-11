@@ -168,7 +168,7 @@ class NewReleaseManager {
         asin: release.asin
       }
 
-      NotificationManager.onNewSeriesRelease(trackedSeries, release, eventData)
+      NotificationManager.onNewSeriesRelease(eventData)
     }
   }
 
