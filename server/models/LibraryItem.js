@@ -407,11 +407,11 @@ class LibraryItem extends Model {
       Logger.debug(`Loaded ${continueSeriesPayload.libraryItems.length} of ${continueSeriesPayload.count} items for "Continue Series" in ${continueSeriesResult.elapsedSeconds}s`)
 
       const newReleasesPayload = newReleasesResult.payload
-      // "New Releases" shelf - external books from tracked series
+      // "Missing from your series" shelf - external books from tracked series
       if (newReleasesPayload.length) {
         shelves.push({
           id: 'new-releases',
-          label: 'New Releases',
+          label: 'Missing from your series',
           labelStringKey: 'LabelNewReleases',
           type: 'newRelease',
           entities: newReleasesPayload.map((r) => r.toJSON()),
