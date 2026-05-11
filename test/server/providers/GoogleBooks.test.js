@@ -22,40 +22,6 @@ describe('GoogleBooks', () => {
     })
   })
 
-  describe('getProductUrl', () => {
-    it('should return null if volumeId is not provided', () => {
-      expect(GoogleBooks.getProductUrl(null)).to.be.null
-      expect(GoogleBooks.getProductUrl('')).to.be.null
-    })
-
-    it('should return correct URL for volume ID', () => {
-      const result = GoogleBooks.getProductUrl('ABC123')
-      expect(result).to.equal('https://books.google.com/books?id=ABC123')
-    })
-  })
-
-  describe('getProviderInfo', () => {
-    it('should return provider info with URL when volumeId is provided', () => {
-      const result = GoogleBooks.getProviderInfo('ABC123')
-      expect(result).to.deep.equal({
-        id: 'googlebooks',
-        label: 'Google Books',
-        color: '#4285F4',
-        url: 'https://books.google.com/books?id=ABC123'
-      })
-    })
-
-    it('should return provider info with null URL when volumeId is not provided', () => {
-      const result = GoogleBooks.getProviderInfo(null)
-      expect(result).to.deep.equal({
-        id: 'googlebooks',
-        label: 'Google Books',
-        color: '#4285F4',
-        url: null
-      })
-    })
-  })
-
   describe('cleanSeriesSequence', () => {
     it('should return an empty string if sequence is falsy', () => {
       expect(googleBooks.cleanSeriesSequence(null)).to.equal('')

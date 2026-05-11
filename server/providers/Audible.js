@@ -20,11 +20,6 @@ class Audible {
     es: 'es'
   }
 
-  static getProductUrl(asin, region = 'us') {
-    const tld = this.regionTldMap[region] || 'com'
-    return `https://www.audible.${tld}/pd/${asin}`
-  }
-
   /**
    * Extract the Audible region code from a library provider identifier
    * (e.g. "audible.de" -> "de"). Returns null if the string does not
@@ -39,15 +34,6 @@ class Audible {
     if (!match) return null
     const region = match[1]
     return this.regionTldMap[region] ? region : null
-  }
-
-  static getProviderInfo(asin, region = 'us') {
-    return {
-      id: this.id,
-      label: this.label,
-      color: this.color,
-      url: asin ? this.getProductUrl(asin, region) : null
-    }
   }
 
   #responseTimeout = 10000

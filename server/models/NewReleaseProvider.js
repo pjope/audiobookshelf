@@ -1,5 +1,4 @@
 const { DataTypes, Model } = require('sequelize')
-const { PROVIDER_CLASSES } = require('../providers/registry')
 
 class NewReleaseProvider extends Model {
   constructor(values, options) {
@@ -116,25 +115,6 @@ class NewReleaseProvider extends Model {
       foreignKey: 'newReleaseId',
       as: 'newRelease'
     })
-  }
-
-  /**
-   * Get provider info with URL
-   * @param {string} [region] - Region for Audible URLs
-   * @returns {Object}
-   */
-  getProviderInfo(region) {
-    const ProviderClass = PROVIDER_CLASSES[this.provider]
-    if (ProviderClass?.getProviderInfo) {
-      return ProviderClass.getProviderInfo(this.externalId, region)
-    }
-
-    return {
-      id: this.provider,
-      label: this.provider,
-      color: '#666666',
-      url: null
-    }
   }
 
   toJSON() {

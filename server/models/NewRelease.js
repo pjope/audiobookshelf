@@ -1,5 +1,4 @@
 const { DataTypes, Model, Op, literal } = require('sequelize')
-const { PROVIDER_CLASSES } = require('../providers/registry')
 
 class NewRelease extends Model {
   constructor(values, options) {
@@ -255,33 +254,8 @@ class NewRelease extends Model {
     })
   }
 
-  getProviderInfo() {
-    const ProviderClass = PROVIDER_CLASSES[this.provider]
-    if (ProviderClass?.getProviderInfo) {
-      const region = this.trackedSeries?.region || 'us'
-      return ProviderClass.getProviderInfo(this.asin, region)
-    }
-
-    return {
-      id: this.provider,
-      label: this.provider,
-      color: '#666666',
-      url: null
-    }
-  }
-
   toJSON() {
     const seriesData = this.trackedSeries?.series?.toOldJSON?.() || null
-    const region = this.trackedSeries?.region || 'us'
-
-    // Build providers array from the new providers relation
-    let providersArray = []
-    if (this.providers?.length) {
-      providersArray = this.providers.map((p) => p.getProviderInfo(region))
-    } else {
-      // Fallback to legacy single provider for backwards compatibility
-      providersArray = [this.getProviderInfo()]
-    }
 
     return {
       id: this.id,
@@ -293,8 +267,6 @@ class NewRelease extends Model {
       coverUrl: this.coverUrl,
       releaseDate: this.releaseDate,
       sequence: this.sequence,
-      provider: this.getProviderInfo(),
-      providers: providersArray,
       dismissed: this.dismissed,
       discoveredAt: this.discoveredAt?.valueOf() || null,
       createdAt: this.createdAt.valueOf(),

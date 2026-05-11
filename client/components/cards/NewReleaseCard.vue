@@ -21,15 +21,6 @@
           <p :style="{ fontSize: 0.75 + 'em' }" class="font-bold text-white">{{ $strings.LabelAvailableBadge || 'AVAILABLE' }}</p>
         </div>
 
-        <!-- Provider Badges (visible on hover, clickable to open provider) -->
-        <transition name="slide-in">
-          <div v-if="providers.length && isHovering" class="absolute z-30 flex flex-wrap gap-1" :style="{ bottom: 0.375 + 'em', left: 0.375 + 'em', maxWidth: 'calc(100% - 2em)' }">
-            <div v-for="(prov, idx) in providers" :key="idx" class="rounded-lg box-shadow-md cursor-pointer hover:scale-105 transform" :style="{ padding: '0.1em 0.5em', backgroundColor: prov.color || '#666666' }" @click.stop.prevent="openProviderUrl(prov.url)">
-              <p :style="{ fontSize: 0.6 + 'em' }" class="font-bold text-white whitespace-nowrap">{{ prov.label }}</p>
-            </div>
-          </div>
-        </transition>
-
         <!-- Series Sequence -->
         <div v-if="sequence" class="absolute rounded-lg bg-black/90 box-shadow-md z-20" :style="{ top: 0.375 + 'em', right: 0.375 + 'em', padding: '0.1em 0.25em' }" style="background-color: #78350f">
           <p :style="{ fontSize: 0.8 + 'em' }">#{{ sequence }}</p>
@@ -134,15 +125,6 @@ export default {
     seriesName() {
       return this._release.trackedSeries?.series?.name || this._release.seriesName || null
     },
-    providers() {
-      if (this._release.providers?.length) {
-        return this._release.providers.filter((p) => p && p.url)
-      }
-      if (this._release.provider?.url) {
-        return [this._release.provider]
-      }
-      return []
-    },
     titleCleaned() {
       if (!this.title) return ''
       if (this.title.length > 60) {
@@ -169,11 +151,6 @@ export default {
     },
     clickCard() {
       this.$emit('click', this.release)
-    },
-    openProviderUrl(url) {
-      if (url) {
-        window.open(url, '_blank')
-      }
     },
     dismissRelease() {
       this.$emit('dismiss', this.release)
@@ -212,22 +189,5 @@ export default {
 .grayscale:hover,
 .hover\:grayscale-50:hover {
   filter: grayscale(50%);
-}
-
-.slide-in-enter-active {
-  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
-}
-.slide-in-leave-active {
-  transition: transform 0.15s ease-in, opacity 0.15s ease-in;
-}
-.slide-in-enter,
-.slide-in-leave-to {
-  transform: translateX(-100%);
-  opacity: 0;
-}
-.slide-in-enter-to,
-.slide-in-leave {
-  transform: translateX(0);
-  opacity: 1;
 }
 </style>

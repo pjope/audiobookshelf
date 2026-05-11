@@ -6,20 +6,6 @@ class GoogleBooks {
   static label = 'Google Books'
   static color = '#4285F4'
 
-  static getProductUrl(volumeId) {
-    if (!volumeId) return null
-    return `https://books.google.com/books?id=${volumeId}`
-  }
-
-  static getProviderInfo(volumeId) {
-    return {
-      id: this.id,
-      label: this.label,
-      color: this.color,
-      url: volumeId ? this.getProductUrl(volumeId) : null
-    }
-  }
-
   #responseTimeout = 10000
   #baseUrl = 'https://www.googleapis.com/books/v1'
 
